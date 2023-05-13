@@ -5,7 +5,29 @@ const convertAudio = require("../convert");
 
 const mapCheckInQueueLoading = new Map();
 const historyCheck = new Map();
-const urlAudio = "https://audioplatform.onrender.com";
+const mapError = new Map();
+const arrPathDownloader = [];
+const urlAudio = "";
+
+const deleteFile = (musicId, f) => {
+  const pathMusic = path.join(__dirname, "..", "musics", `${musicId}.${f}`);
+  if (fs.existsSync(pathMusic))
+    fs.unlink(pathMusic, (error) => {
+      if (error) {
+        console.log("has error while delete " + musicId + "." + f);
+        mapError.set(`${musicId}.${f} ${Date.now()}`, true);
+      } else console.log("deleted " + musicId + "." + f);
+    });
+};
+
+const deleteAllFile = () => {
+  arrPathDownloader.forEach((e) => {
+    deleteFile(e.musicId, "mp3");
+    deleteFile(e.musicId, e.format);
+  });
+  if (arrPathDownloader.length > 512)
+    arrPathDownloader = [arrPathDownloader.at(-1)];
+};
 
 module.exports.getStreamAudioMp3 = (req, res, next) => {
   console.log("in getStreamAudioMp3");
@@ -36,6 +58,7 @@ module.exports.getConvertAudio = (req, res, next) => {
   const musicPath = req.params.musicPath;
   const musicId = req.params.musicPath.split(".")[0];
   const format = req.params.musicPath.split(".")[1];
+  const keep = req.query.keep;
   console.log(musicPath);
 
   // nếu musicPath đang load thì trả về đang load
@@ -60,6 +83,11 @@ module.exports.getConvertAudio = (req, res, next) => {
     });
 
   mapCheckInQueueLoading.set(musicPath, true);
+
+  // delete file
+  if (!keep) deleteAllFile();
+  else console.log("keep");
+
   const stream = ytdl(`https://www.youtube.com/watch?v=${musicId}`, {
     filter: "audioonly",
     quality: "highestaudio",
@@ -80,12 +108,15 @@ module.exports.getConvertAudio = (req, res, next) => {
     const startConvert = Date.now();
     stream.destroy();
 
+    // hàm đổi định dạng âm thanh
     convertAudio(musicId + ".mp3", musicPath, (err) => {
       mapCheckInQueueLoading.delete(musicPath);
       if (err)
         return res.send({
           error: { err, time: (Date.now() - startTime) / 1000 },
         });
+      // thêm path vào, để xóa file mp3 và xóa old file
+      arrPathDownloader.push({ musicId, format, time: Date.now() });
 
       historyCheck.set(format, [
         ...(historyCheck.get(format) || []),
@@ -95,6 +126,7 @@ module.exports.getConvertAudio = (req, res, next) => {
           musicId,
         },
       ]);
+
       res.send({
         result: {
           time: (Date.now() - startTime) / 1000,
@@ -114,6 +146,19 @@ module.exports.getHistory = (req, res, next) => {
     data.push({ format: key, info: value });
   });
   res.send({
-    result: { data },
+    result: { history: data, error: [...mapError] },
   });
+};
+
+module.exports.getCheckExist = (req, res, next) => {
+  const musicPath = req.params.musicPath;
+  res.send({
+    result: fs.existsSync(path.join(__dirname, "..", "musics", musicPath)),
+    error: !fs.existsSync(path.join(__dirname, "..", "musics", musicPath)),
+  });
+};
+
+module.exports.getFileAudioConverted = (req, res, next) => {
+  const musicPath = req.params.musicPath;
+  res.sendFile(path.join(__dirname, "..", "musics", musicPath));
 };

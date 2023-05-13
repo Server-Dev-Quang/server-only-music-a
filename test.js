@@ -24,3 +24,23 @@ console.log(
     __dirname.replace(/\\/g, "/") + `/musics/${musicOutputFile}`
   }`
 );
+
+let cnt = 0;
+let xxx = 555;
+for (let i = 0; i < 1000; i++) {
+  let map = new Map();
+  let arr = [];
+  for (let j = 0; j < 1000; j++) {
+    cnt++;
+    let rand = Math.random();
+    map.set(rand, true);
+    arr.push(rand);
+  }
+  let k = 0;
+  map.forEach((value, key) => {
+    if (key !== arr[k]) console.log("wrong");
+    ++k;
+  });
+}
+
+console.log("correct", cnt);
