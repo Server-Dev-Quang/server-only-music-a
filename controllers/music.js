@@ -1,7 +1,9 @@
 const ytdl = require("ytdl-core");
+const stream = require("youtube-audio-stream");
 const fs = require("fs");
 const path = require("path");
 const convertAudio = require("../convert");
+const urlBase = "http://youtube.com/watch?v=";
 
 const mapCheckInQueueLoading = new Map();
 const historyCheck = new Map();
@@ -59,6 +61,8 @@ module.exports.getConvertAudio = (req, res, next) => {
   const musicId = req.params.musicPath.split(".")[0];
   const format = req.params.musicPath.split(".")[1];
   const keep = req.query.keep;
+  // LISTEN of DOWNLOAD
+  const type = req.query.type || "LISTEN";
   console.log(musicPath);
 
   // nếu musicPath đang load thì trả về đang load
@@ -116,7 +120,7 @@ module.exports.getConvertAudio = (req, res, next) => {
           error: { err, time: (Date.now() - startTime) / 1000 },
         });
       // thêm path vào, để xóa file mp3 và xóa old file
-      arrPathDownloader.push({ musicId, format, time: Date.now() });
+      arrPathDownloader.push({ musicId, format, type, time: Date.now() });
 
       historyCheck.set(format, [
         ...(historyCheck.get(format) || []),
@@ -161,4 +165,9 @@ module.exports.getCheckExist = (req, res, next) => {
 module.exports.getFileAudioConverted = (req, res, next) => {
   const musicPath = req.params.musicPath;
   res.sendFile(path.join(__dirname, "..", "musics", musicPath));
+};
+
+module.exports.getStreamV2 = (req, res, next) => {
+  const musicId = req.params.musicId;
+  stream(urlBase + musicId).pipe(res);
 };
