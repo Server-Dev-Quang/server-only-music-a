@@ -20,6 +20,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "nodemon": "^2.0.22",
     "youtube-audio-stream": "^0.3.61",
+    "youtube-dlsr": "^2.8.2",
     "ytdl-core": "^4.11.4"
   }
 }

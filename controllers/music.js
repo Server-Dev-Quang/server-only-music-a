@@ -3,6 +3,7 @@ const stream = require("youtube-audio-stream");
 const fs = require("fs");
 const path = require("path");
 const convertAudio = require("../convert");
+const { download } = require("youtube-dlsr");
 const urlBase = "http://youtube.com/watch?v=";
 
 const mapCheckInQueueLoading = new Map();
@@ -168,6 +169,15 @@ module.exports.getFileAudioConverted = (req, res, next) => {
 };
 
 module.exports.getStreamV2 = (req, res, next) => {
-  const musicId = req.params.musicId;
-  stream(urlBase + musicId).pipe(res);
+  const musicId = req.params.musicId.split(".")[0];
+  console.log("in getStreamV2");
+  console.log(urlBase + musicId);
+  // stream(urlBase + musicId)
+  //   .pipe(res)
+  //   .on("error", (err) => {
+  //     console.log(err);
+  //   });
+  download(urlBase + musicId).then((stream) => {
+    stream.pipe(res);
+  });
 };
