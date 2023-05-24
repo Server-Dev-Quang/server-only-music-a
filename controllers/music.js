@@ -170,14 +170,12 @@ module.exports.getFileAudioConverted = (req, res, next) => {
 
 module.exports.getStreamV2 = (req, res, next) => {
   const musicId = req.params.musicId.split(".")[0];
+  // const musicId = req.params.musicId;
   console.log("in getStreamV2");
   console.log(urlBase + musicId);
-  // stream(urlBase + musicId)
-  //   .pipe(res)
-  //   .on("error", (err) => {
-  //     console.log(err);
-  //   });
-  download(urlBase + musicId).then((stream) => {
-    stream.pipe(res);
-  });
+  stream(urlBase + musicId)
+    .pipe(res)
+    .on("error", (err) => {
+      console.log(err);
+    });
 };
